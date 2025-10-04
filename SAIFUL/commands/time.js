@@ -2,10 +2,10 @@ const moment = require("moment-timezone");
 
 module.exports.config = {
   name: "time",
-  version: "4.3.0",
+  version: "4.3.1",
   hasPermssion: 0,
-  credits: "Mohammad Akash + Saiful Edit + Fixed by GPT-5",
-  description: "Displays current time, Bangla date, bot uptime, and important days.",
+  credits: "Mohammad Akash + Saiful Edit (Bangla Month Fix by GPT-5)",
+  description: "Displays current time, Bangla date, bot uptime, and important days (accurate month fix).",
   commandCategory: "Info",
   cooldowns: 1
 };
@@ -14,11 +14,7 @@ module.exports.config = {
 function engToBanglaNumber(number) {
   const eng = ["0","1","2","3","4","5","6","7","8","9"];
   const ban = ["০","১","২","৩","৪","৫","৬","৭","৮","৯"];
-  let str = number.toString();
-  for (let i = 0; i < eng.length; i++) {
-    str = str.replace(new RegExp(eng[i], "g"), ban[i]);
-  }
-  return str;
+  return number.toString().split("").map(ch => eng.includes(ch) ? ban[eng.indexOf(ch)] : ch).join("");
 }
 
 // 🔹 বাংলা মাস
@@ -45,8 +41,8 @@ const banglaMonthStart = [
   [10,16],// অগ্রহায়ণ - নভেম্বর 16
   [11,16],// পৌষ - ডিসেম্বর 16
   [0,15], // মাঘ - জানুয়ারি 15
-  [1,13], // ফাল্গুন - ফেব্রুয়ারি 13/14
-  [2,15]  // চৈত্র - মার্চ 15
+  [1,13], // ফাল্গুন - ফেব্রুয়ারি 13
+  [2,14]  // চৈত্র - মার্চ 14
 ];
 
 // 🔹 গুরুত্বপূর্ণ দিন
@@ -81,17 +77,18 @@ module.exports.run = async function({ api, event }) {
   let banglaYear = engYear - 593;
   if (engMonth < 3 || (engMonth === 3 && engDate < 14)) banglaYear -= 1;
 
-  // 🔹 বাংলা মাস নির্ধারণ (সংশোধিত)
+  // ✅ বাংলা মাস সঠিকভাবে নির্ধারণ
   let banglaMonth = 11; // ডিফল্ট চৈত্র
   for (let i = 0; i < 12; i++) {
     const [m, d] = banglaMonthStart[i];
-    if (engMonth > m || (engMonth === m && engDate >= d)) {
+    const [nextM, nextD] = banglaMonthStart[(i + 1) % 12];
+    const start = moment(`${engYear}-${m + 1}-${d}`, "YYYY-M-D");
+    const next = moment(`${engYear}-${nextM + 1}-${nextD}`, "YYYY-M-D");
+
+    if (now.isSameOrAfter(start) && now.isBefore(next)) {
       banglaMonth = i;
+      break;
     }
-  }
-  // যদি কোনও মাস না মিলে, তাহলে আগের বছরের চৈত্র ধরা
-  if (engMonth < banglaMonthStart[0][0] || (engMonth === 3 && engDate < 14)) {
-    banglaMonth = 11; // চৈত্র
   }
 
   // 🔹 বাংলা দিনের হিসাব
@@ -102,19 +99,20 @@ module.exports.run = async function({ api, event }) {
   // ফাল্গুন লিপ ইয়ার চেক
   if (banglaMonth === 10) {
     const isLeap = ((engYear % 400 === 0) || (engYear % 4 === 0 && engYear % 100 !== 0));
-    if (isLeap && banglaDay > 29) banglaDay = 30;
+    if (isLeap && banglaDay > 30) banglaDay = 30;
   }
 
+  // 🔹 সঠিক বাংলা তারিখ তৈরি
   const banglaDate = `${engToBanglaNumber(banglaDay)} ${banglaMonths[banglaMonth]}, ${engToBanglaNumber(banglaYear)} (${banglaWeekdays[now.day()]})`;
 
-  // আজকের গুরুত্বপূর্ণ দিন
+  // 🔹 আজকের গুরুত্বপূর্ণ দিন
   let todayImportant = importantDays.filter(d => d.check(now)).map(d => d.name).join(", ");
   if (!todayImportant) todayImportant = "কোনও বিশেষ দিন নেই";
 
-  // কেপশন
+  // 🔹 কেপশন
   const caption = ` 🌟 আল্লাহর আশীর্বাদ সর্বদা আপনার সাথে থাকুক..! 🕌 নামাজ নিয়মিত পড়ুন..! 🌙 দোয়া করতে ভুলবেন না..! 🤝 মানুষের সাথে সদয় থাকুন..! 💫 জীবন আলোকিত ও বরকতপূর্ণ হোক..!`;
 
-  // ফাইনাল মেসেজ
+  // 🔹 ফাইনাল মেসেজ (তোমার আগের ফুলবক্স স্টাইলেই)
   const message =  `╔═══════════════╗
 📅 𝙲𝚊𝚕𝚎𝚗𝚍𝚎𝚛 📅
 ╚═══════════════╝
