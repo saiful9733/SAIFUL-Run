@@ -7,7 +7,7 @@
 <p align="center">
   <strong>Made by:</strong> Saiful<br>
   <strong>GitHub:</strong> [@saiful0144](https://github.com/saiful0144)<br>
-  <strong>Telegram:</strong> [@arakashiam](https://t.me/arakashiam)
+  <strong>Telegram:</strong> [@arakashiam](t.me/saiful216)
 </p>
 
 ---
